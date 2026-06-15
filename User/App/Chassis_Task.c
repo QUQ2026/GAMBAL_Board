@@ -32,6 +32,20 @@ static void ApplyGimbalTransform(CONTAL_Typedef *CONTAL,
     CONTAL->BOTTOM.VY =  vx_rc * sinf(angle_rad) + vy_rc * cosf(angle_rad);
 }
 
+
+static void OmniResolve(CONTAL_Typedef *CONTAL)
+{
+    float vx = CONTAL->BOTTOM.VX;
+    float vy = CONTAL->BOTTOM.VY;
+    float vw = CONTAL->BOTTOM.VW * 0.25f;   /* 旋转半径系数，需实车标定 */
+
+    CONTAL->BOTTOM.wheel1 = ( vx + vy + vw) * OMNI_RATIO;  /* Chassis_3 */
+    CONTAL->BOTTOM.wheel2 = (-vx + vy + vw) * OMNI_RATIO;  /* Chassis_4 */
+    CONTAL->BOTTOM.wheel3 = (-vx - vy + vw) * OMNI_RATIO;  /* Chassis_1 */
+    CONTAL->BOTTOM.wheel4 = ( vx - vy + vw) * OMNI_RATIO;  /* Chassis_2 */
+}
+
+
 uint8_t Motor_PID_Chassis_Init(MOTOR_Typdef *MOTOR)
 {
     float PID_S_1[3] = {   3.0f,   0.0f,   0.0f   };
