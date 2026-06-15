@@ -12,6 +12,12 @@ static float NormalizeAngle(float angle)//角度归一化
     return angle;
 }
 
+static float Clamp(float val, float limit)//限幅
+{
+    if (val >  limit) return  limit;
+    if (val < -limit) return -limit;
+    return val;
+}
 
 /**
 * @brief  坐标变换：将云台坐标系下的 VX/VY 转换到底盘坐标系，并写入 CONTAL->BOTTOM
