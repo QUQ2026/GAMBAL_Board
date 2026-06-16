@@ -145,7 +145,6 @@ uint8_t chassis_task(CONTAL_Typedef *CONTAL,
     MOTOR->DJI_3508_Chassis_4.DATA.Aim = CONTAL->BOTTOM.wheel2*4.0f;
     MOTOR->DJI_3508_Chassis_1.DATA.Aim = CONTAL->BOTTOM.wheel3*4.0f;
     MOTOR->DJI_3508_Chassis_2.DATA.Aim = CONTAL->BOTTOM.wheel4*4.0f;
-    //		}
     //遥控离线保护
     if(Root->RM_DBUS==0)
     {
@@ -173,7 +172,6 @@ uint8_t chassis_task(CONTAL_Typedef *CONTAL,
                              CAP_GET,
                              MOTOR);
 
-    /*总输出计算*/
     float Out_put[4];
     Out_put[0] = MOTOR->DJI_3508_Chassis_1.PID_S.Output;//可在前面加一个前馈
 
@@ -183,7 +181,7 @@ uint8_t chassis_task(CONTAL_Typedef *CONTAL,
 
     Out_put[3] = MOTOR->DJI_3508_Chassis_4.PID_S.Output;
 
-    /*CAN发送*/
+    //CAN发送
     DJI_Current_Ctrl(&hcan1,
                      0x200,
                      (int16_t)Out_put[0],
@@ -197,14 +195,14 @@ uint8_t chassis_task(CONTAL_Typedef *CONTAL,
 //底盘mode
 void Chassis_Normal(CONTAL_Typedef *CONTAL, DBUS_Typedef *DBUS, MOTOR_Typdef *MOTOR)//普通模式
 {
-    /* 旋转速度：拨轮映射 */
+    //旋转速度：拨轮映射
     CONTAL->BOTTOM.VW = DBUS->Remote.CH3 * (VW_MAX / REMOTE_SCALE);
 
-    /* 读取 Yaw 电机编码器，计算云台相对底盘偏角（度） */
+    //读取 Yaw 电机编码器，计算云台相对底盘偏角（度）
     float raw_angle = fmodf(MOTOR->DJI_6020_Yaw.DATA.Angle_now * 360.0f / 8192.0f, 360.0f);
     float gimbal_deg = NormalizeAngle(raw_angle);
 
-    /* 坐标变换 + 全向轮逆解 */
+    // 坐标变换 + 全向轮逆解
     ApplyGimbalTransform(CONTAL, DBUS, gimbal_deg);
     OmniResolve(CONTAL);
 }
