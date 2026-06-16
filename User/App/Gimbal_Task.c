@@ -80,8 +80,6 @@ static void Gimbal_PID_Calculate(MOTOR_Typdef *MOTOR, IMU_Data_t *IMU,
 }
 
 
-
-
 uint8_t gimbal_task(CONTAL_Typedef          *CONTAL,
                     RUI_ROOT_STATUS_Typedef  *Root,
                     MOTOR_Typdef            *MOTOR,
@@ -157,10 +155,10 @@ void Gimbal_Set_Target_Follow(CONTAL_Typedef *CONTAL,
                                IMU_Data_t     *IMU)
 {
     /* Yaw：保持当前 IMU 方向不变（云台锁住，底盘来跟）
-     * 实际上目标就是当前 yaw，不累加 */
+      实际上目标就是当前 yaw，不累加 */
     /* 如果需要摇杆微调方向，取消下面注释：
-     * CONTAL->HEAD.Yaw += DBUS->Remote.CH2 * (YAW_RC_SPEED / REMOTE_SCALE);
-     * CONTAL->HEAD.Yaw = Gimbal_NormalizeAngle(CONTAL->HEAD.Yaw);
+      CONTAL->HEAD.Yaw += DBUS->Remote.CH2 * (YAW_RC_SPEED / REMOTE_SCALE);
+     *CONTAL->HEAD.Yaw = Gimbal_NormalizeAngle(CONTAL->HEAD.Yaw);
      */
 
     /* Pitch：摇杆累加 */
