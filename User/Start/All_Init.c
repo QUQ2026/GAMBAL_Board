@@ -31,7 +31,7 @@ uint8_t VisionRx[30];
 uint8_t sd_v_buff[24];
 
 //电容
-CAPDATE_TYPDEF CAPDATA;
+CAPDATE_TYPDEF CAPDATE;
 
 //电源电压
 float voltage;
