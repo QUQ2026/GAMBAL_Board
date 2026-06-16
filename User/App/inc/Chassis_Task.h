@@ -8,7 +8,8 @@
 #include "RUI_ROOT_INIT.h"
 #include "Motors.h"
 #include "Power_Ctrl.h"
-
+static float NormalizeAngle(float angle);
+static float Clamp(float val, float limit);
 
 static void ApplyGimbalTransform(CONTAL_Typedef *CONTAL,
                                  DBUS_Typedef   *DBUS,
