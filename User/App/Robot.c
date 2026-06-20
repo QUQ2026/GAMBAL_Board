@@ -43,7 +43,7 @@ void RobotTask(uint8_t mode,
             Chassis_auto_changeMode(CONTAL,IMU_Data,VT13_DBUS);
         }break;
 
-        case 2: {
+        case 2: {//云台
             if (Root->RM_DBUS != RUI_DF_OFFLINE) {
                 Gimbal_set_target_VT13(CONTAL,VT13_DBUS,IMU_Data);
             }

@@ -19,6 +19,7 @@ static float Clamp(float val, float limit)//限幅
     return val;
 }
 
+//DBUS遥控写法
 
 static void ApplyGimbalTransform(CONTAL_Typedef *CONTAL,
                                  DBUS_Typedef   *DBUS,
@@ -160,9 +161,9 @@ uint8_t chassis_task(CONTAL_Typedef *CONTAL,
     //遥控离线保护
     if(Root->RM_DBUS==0)
     {
-        CONTAL->BOTTOM.wheel1 = 0;
+        CONTAL->BOTTOM.wheel1 =0;
         CONTAL->BOTTOM.wheel2 =0;
-        CONTAL->BOTTOM.wheel3 = 0;
+        CONTAL->BOTTOM.wheel3 =0;
         CONTAL->BOTTOM.wheel4 =0;
     }
 
@@ -211,7 +212,7 @@ uint8_t chassis_task(CONTAL_Typedef *CONTAL,
 }
 
 //底盘mode
-void Chassis_Normal(CONTAL_Typedef *CONTAL, DBUS_Typedef *DBUS, MOTOR_Typdef *MOTOR)//普通模式
+/*void Chassis_Normal(CONTAL_Typedef *CONTAL, DBUS_Typedef *DBUS, MOTOR_Typdef *MOTOR)//普通模式
 {
     //旋转速度：拨轮映射
     CONTAL->BOTTOM.VW = DBUS->Remote.CH3 * (VW_MAX / REMOTE_SCALE);
@@ -221,17 +222,17 @@ void Chassis_Normal(CONTAL_Typedef *CONTAL, DBUS_Typedef *DBUS, MOTOR_Typdef *MO
     ApplyGimbalTransform(CONTAL, DBUS, gimbal_deg);
     //OmniResolve(CONTAL);
     MecanumResolve(CONTAL);
-}
+}*/
 
 
-void Chassis_Gyroscope(CONTAL_Typedef *CONTAL, DBUS_Typedef *DBUS, IMU_Data_t *IMU)//小陀螺
+void Chassis_gyroscope(CONTAL_Typedef *CONTAL, VT13_Typedef *VT13, IMU_Data_t *IMU)//小陀螺
 {
-    CONTAL->BOTTOM.VW = GYROSCOPE_W;
+    CONTAL->BOTTOM.VW = (float)VT13->Remote.wheel*(VW_MAX/1024.0f);
 
     // 使用陀螺仪 yaw（不修改原始值，局部变量归一化）
     float gimbal_deg =NormalizeAngle(IMU->yaw);
 
-    ApplyGimbalTransform(CONTAL, DBUS, gimbal_deg);
+    ApplyGimbal_Transform(CONTAL, VT13, gimbal_deg);
     MecanumResolve(CONTAL);
 }
 
@@ -239,7 +240,7 @@ void Chassis_Gyroscope(CONTAL_Typedef *CONTAL, DBUS_Typedef *DBUS, IMU_Data_t *I
 
 
 
-void Chassis_Follow_Gimbal(CONTAL_Typedef *CONTAL, DBUS_Typedef *DBUS, IMU_Data_t *IMU)
+void Chassis_Follow_Gimbal(CONTAL_Typedef *CONTAL, VT13_Typedef *VT13, IMU_Data_t *IMU)
 {
     // CONTAL->CG.RELATIVE_ANGLE 在 gimbal_task 中已计算得出
     // = -(YAW_INIT_ANGLE - Angle_now) =) = 基于编码器的云台相对角度（单位：编码器计数）
@@ -250,7 +251,7 @@ void Chassis_Follow_Gimbal(CONTAL_Typedef *CONTAL, DBUS_Typedef *DBUS, IMU_Data_
     CONTAL->BOTTOM.VW = Clamp(vw, VW_MAX);
     // 坐标转换：IMU->yaw = 云台绝对角度
     float gimbal_deg = NormalizeAngle(IMU->yaw);
-    ApplyGimbalTransform(CONTAL, DBUS, gimbal_deg);
+    ApplyGimbal_Transform(CONTAL, VT13, gimbal_deg);
    // OmniResolve(CONTAL);
     MecanumResolve(CONTAL);
 }
@@ -264,4 +265,5 @@ void Chassis_auto_changeMode(CONTAL_Typedef *CONTAL, IMU_Data_t *IMU,VT13_Typede
         Chassis_Follow_Gimbal(CONTAL, VT13, IMU);
     }
 
+}
 
