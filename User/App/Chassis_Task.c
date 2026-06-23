@@ -238,7 +238,12 @@ void Chassis_gyroscope(CONTAL_Typedef *CONTAL, VT13_Typedef *VT13, IMU_Data_t *I
     ApplyGimbal_Transform(CONTAL, *VT13, gimbal_deg);
     MecanumResolve(CONTAL);
 }
-
+void Chassis_Gyroscope_DBUS(CONTAL_Typedef *CONTAL, DBUS_Typedef *DBUS, IMU_Data_t *IMU) {
+    CONTAL->BOTTOM.VW =(float)DBUS->Remote.Dial *(VW_MAX/660.0f);// 使用陀螺仪 yaw（不修改原始值，局部变量归一化）
+    float gimbal_deg =NormalizeAngle(IMU->yaw);
+    ApplyGimbalTransform(CONTAL, DBUS, gimbal_deg);
+    MecanumResolve(CONTAL);
+}
 
 
 
