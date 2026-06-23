@@ -136,6 +136,12 @@ void Gimbal_set_target_VT13(CONTAL_Typedef *CONTAL,VT13_Typedef *VT13,IMU_Data_t
     CONTAL->HEAD.Pitch  = Gimbal_Clamp(CONTAL->HEAD.Pitch,PITCH_ANGLE_MAX,PITCH_ANGLE_MIN);
 }
 
+void Gimbal_Set_target_DBUS(CONTAL_Typedef *CONTAL,DBUS_Typedef *DBUS,IMU_Data_t *IMU) {
+    CONTAL->HEAD.Yaw+=DBUS->Remote.CH3*(YAW_RC_SPEED / 660.0f);
+    CONTAL->HEAD.Yaw  = Gimbal_NormalizeAngle(CONTAL->HEAD.Yaw);
+    CONTAL->HEAD.Pitch += DBUS->Remote.CH2 * (PITCH_RC_SPEED / 660.0f);
+    CONTAL->HEAD.Pitch  = Gimbal_Clamp(CONTAL->HEAD.Pitch,PITCH_ANGLE_MAX,PITCH_ANGLE_MIN);
+}
 
 
 //
