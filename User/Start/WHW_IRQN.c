@@ -173,10 +173,10 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
 			case 0x204:
 				MOTOR_CAN_RX_2006RM(&ALL_MOTOR.DJI_3508_Chassis_4.DATA, rx_data);
 				break;
-			case 0x206:
+			case 0x205:
 				MOTOR_CAN_RX_2006RM(&ALL_MOTOR.DJI_6020_Pitch.DATA, rx_data);
 				break;
-			case 0x207:
+			case 0x206:
 				MOTOR_CAN_RX_2006RM(&ALL_MOTOR.DJI_6020_Yaw.DATA, rx_data);
 				break;
 			default:

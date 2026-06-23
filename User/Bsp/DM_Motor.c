@@ -196,7 +196,7 @@ void dm4310_RXdata(DM_MOTOR_Typdef *motor, uint8_t *rx_data) //一拖四模式�
 	 spd_int16= ((rx_data[2] << 8)|(rx_data[3]));
 	 cur_int16 = (rx_data[4] << 8)|(rx_data[5]);
 	motor->DATA.initialAngle  =INIT_ANGLE;/////////初始位置
-	angleError =	motor->DATA .Angle_now -motor->DATA .initialAngle ;
+	angleError =motor->DATA .Angle_now -motor->DATA .initialAngle ;
 	if(angleError > 4096){
 			angleError -= 8192;
 	}
@@ -204,11 +204,11 @@ void dm4310_RXdata(DM_MOTOR_Typdef *motor, uint8_t *rx_data) //一拖四模式�
 			angleError += 8192;
 	}
 	motor->DATA.ralativeAngle = angleError * 0.044f;
-	if(( motor->DATA .Angle_now - 	motor->DATA .Angle_last )<-4096)
+	if(( motor->DATA .Angle_now - motor->DATA .Angle_last )<-4096)
 	{
 		motor->DATA .round++;
 	}
-	else if(( motor->DATA .Angle_now  - 	motor->DATA .Angle_last )>4096)
+	else if(( motor->DATA .Angle_now  - motor->DATA .Angle_last )>4096)
 	{
 	  motor->DATA .round--;
 	}

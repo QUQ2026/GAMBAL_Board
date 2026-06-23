@@ -9,6 +9,7 @@
 #include "controller.h"
 #include "VT13.h"
 #include "Chassis_Task.h"
+#include "DBUS.h"
 
 void RobotTask(uint8_t mode,
                DBUS_Typedef *DBUS,

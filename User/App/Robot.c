@@ -40,7 +40,8 @@ void RobotTask(uint8_t mode,
                 CONTAL->BOTTOM.wheel4 = 0.0f;
                 break;
             }
-            Chassis_auto_changeMode(CONTAL,IMU_Data,VT13_DBUS);
+            //Chassis_auto_changeMode(CONTAL,IMU_Data,VT13_DBUS);
+            Chassis_Auto_changeMode(CONTAL,IMU_Data,DBUS);
         }break;
 
         case 2: {//云台
