@@ -128,7 +128,8 @@ uint8_t gimbal_task(CONTAL_Typedef          *CONTAL,
 
 
 //VT13版
-void Gimbal_set_target_VT13(CONTAL_Typedef *CONTAL,VT13_Typedef *VT13,IMU_Data_t *IMU) {
+void Gimbal_set_target_VT13(CONTAL_Typedef *CONTAL,VT13_Typedef *VT13,IMU_Data_t *IMU)
+{
     CONTAL->HEAD.Yaw += VT13->Remote.Channel[3] * (YAW_RC_SPEED / 1024.0f);
     CONTAL->HEAD.Yaw  = Gimbal_NormalizeAngle(CONTAL->HEAD.Yaw);
     CONTAL->HEAD.Pitch += VT13->Remote.Channel[2] * (PITCH_RC_SPEED / 1024.0f);
