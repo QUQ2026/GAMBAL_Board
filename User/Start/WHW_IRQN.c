@@ -173,11 +173,17 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
 			case 0x204:
 				MOTOR_CAN_RX_2006RM(&ALL_MOTOR.DJI_3508_Chassis_4.DATA, rx_data);
 				break;
-			case 0x205:
-				MOTOR_CAN_RX_2006RM(&ALL_MOTOR.DJI_6020_Pitch.DATA, rx_data);
+			// case 0x205:
+			// 	MOTOR_CAN_RX_2006RM(&ALL_MOTOR.DJI_6020_Pitch.DATA, rx_data);
+			// 	break;
+			// case 0x206:
+			// 	MOTOR_CAN_RX_2006RM(&ALL_MOTOR.DJI_6020_Yaw.DATA, rx_data);
+			// 	break;
+			case 0x301:
+				dm4310_RXdata(&ALL_MOTOR.m_dm4310_y_t,rx_data);
 				break;
-			case 0x206:
-				MOTOR_CAN_RX_2006RM(&ALL_MOTOR.DJI_6020_Yaw.DATA, rx_data);
+			case 0x302:
+				dm4310_RXdata(&ALL_MOTOR.m_dm4310_p_t,rx_data);
 				break;
 			default:
 				break;
