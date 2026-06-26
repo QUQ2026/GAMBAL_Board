@@ -43,39 +43,37 @@ uint8_t MOTOR_PID_Gimbal_INIT(MOTOR_Typdef *MOTOR)
 }
 
 
-static void Gimbal_PID_Calculate(MOTOR_Typdef *MOTOR, IMU_Data_t *IMU,
-                                  float target_yaw, float target_pitch)
-{
-    float yaw_angle_err = Gimbal_NormalizeAngle(target_yaw - IMU->yaw);
-    PID_Calculate(&MOTOR->m_dm4310_y_t.PID_P,
-                  IMU->yaw,          // 当前反馈（绝对角度）
-                  target_yaw);       // 目标角度
-
-    float v_des = MOTOR->m_dm4310_y_t.PID_P.Output
-                   * (3.14159265f / 180.0f) / 0.001f;
-
-    if (v_des >  YAW_V_MAX_OUTPUT) v_des =  YAW_V_MAX_OUTPUT;
-    if (v_des < -YAW_V_MAX_OUTPUT) v_des = -YAW_V_MAX_OUTPUT;
-    mit_ctrl(&hcan1, YAW_CAN_ID,
-             0.0f, v_des,
-            0.0f, YAW_KD_DAMP,
-            0.0f);
-    /* 外环输出作为内环目标，补偿底盘旋转：
-      小陀螺时底盘转速会叠加到云台上，
-      用 CONTAL->CG.YAW_SPEED（底盘yaw角速度）前馈补偿 */
-    // PID_Calculate(&MOTOR->m_dm4310_y_t.PID_S,
-    //               (float)MOTOR->m_dm4310_y_t.DATA.Speed_now,
-    //               MOTOR->m_dm4310_y_t.PID_P.Output);
-
-    PID_Calculate(&MOTOR->m_dm4310_p_t.PID_P,
-                  IMU->pitch,        // 当前反馈
-                  target_pitch);     // 目标角度
-
-    // PID_Calculate(&MOTOR->m_dm4310_p_t.PID_S,
-    //               (float)MOTOR->m_dm4310_p_t.DATA.Speed_now,
-    //               MOTOR->m_dm4310_p_t.PID_P.Output);
-
-}
+// static void Gimbal_PID_Calculate(MOTOR_Typdef *MOTOR, IMU_Data_t *IMU,
+//                                   float target_yaw, float target_pitch)
+// {
+//     float yaw_angle_err = Gimbal_NormalizeAngle(target_yaw - IMU->yaw);
+//     PID_Calculate(&MOTOR->m_dm4310_y_t.PID_P,IMU->yaw,          // 当前反馈（绝对角度）
+//         target_yaw);       // 目标角度
+//
+//     float v_des = MOTOR->m_dm4310_y_t.PID_P.Output* (3.14159265f / 180.0f) / 0.001f;
+//
+//     if (v_des >  YAW_V_MAX_OUTPUT) v_des =  YAW_V_MAX_OUTPUT;
+//     if (v_des < -YAW_V_MAX_OUTPUT) v_des = -YAW_V_MAX_OUTPUT;
+//     mit_ctrl(&hcan1, YAW_CAN_ID,
+//              0.0f, v_des,
+//             0.0f, YAW_KD_DAMP,
+//             0.0f);
+//     /* 外环输出作为内环目标，补偿底盘旋转：
+//       小陀螺时底盘转速会叠加到云台上，
+//       用 CONTAL->CG.YAW_SPEED（底盘yaw角速度）前馈补偿 */
+//     // PID_Calculate(&MOTOR->m_dm4310_y_t.PID_S,
+//     //               (float)MOTOR->m_dm4310_y_t.DATA.Speed_now,
+//     //               MOTOR->m_dm4310_y_t.PID_P.Output);
+//
+//     PID_Calculate(&MOTOR->m_dm4310_p_t.PID_P,
+//                   IMU->pitch,        // 当前反馈
+//                   target_pitch);     // 目标角度
+//
+//     // PID_Calculate(&MOTOR->m_dm4310_p_t.PID_S,
+//     //               (float)MOTOR->m_dm4310_p_t.DATA.Speed_now,
+//     //               MOTOR->m_dm4310_p_t.PID_P.Output);
+//
+// }
 uint8_t Gimbal_AIM_INIT(CONTAL_Typedef *CONTAL)
 {
     for (int i = 0; i < 10; i++)
@@ -85,8 +83,7 @@ uint8_t Gimbal_AIM_INIT(CONTAL_Typedef *CONTAL)
         motor_mode(&hcan1, PITCH_CAN_ID, 0, DM_CMD_MOTOR_MODE);  // 0xFC 使能Pitch
         osDelay(1);
     }
-
-    /* Pitch 软限位（防止撞车身）★ 根据实际机械结构调整 */
+    //Pitch 软限位（防止撞车身）,根据实际机械结构调整
     CONTAL->HEAD.Pitch_MIN = -20.0f;
     CONTAL->HEAD.Pitch_MAX =  20.0f;
 
@@ -154,7 +151,14 @@ void Gimbal_Set_target_DBUS(CONTAL_Typedef *CONTAL,DBUS_Typedef *DBUS,IMU_Data_t
     CONTAL->HEAD.Pitch  = Gimbal_Clamp(CONTAL->HEAD.Pitch,PITCH_ANGLE_MAX,PITCH_ANGLE_MIN);
 }
 
+void Gimbal_Set_Target_RC(CONTAL_Typedef *CONTAL,DBUS_Typedef *DBUS, IMU_Data_t *IMU)
+{
+    //Yaw：直接累加，不归一化，保持和 YawTotalAngle 同一坐标系 ,以下累加的符号可能反了
+    CONTAL->HEAD.Yaw -= (float)DBUS->Remote.CH3 * (YAW_RC_SPEED / 660.0f);
+    CONTAL->HEAD.Pitch -= (float)DBUS->Remote.CH2 * (PITCH_RC_SPEED / 660.0f);
+    CONTAL->HEAD.Pitch  = Gimbal_Clamp(CONTAL->HEAD.Pitch,CONTAL->HEAD.Pitch_MAX,CONTAL->HEAD.Pitch_MIN);
 
+}
 //
 //
 // void Gimbal_Set_Target_RC(CONTAL_Typedef *CONTAL,DBUS_Typedef *DBUS,IMU_Data_t *IMU)
@@ -197,10 +201,7 @@ void Gimbal_Set_target_DBUS(CONTAL_Typedef *CONTAL,DBUS_Typedef *DBUS,IMU_Data_t
 //                                        PITCH_ANGLE_MIN);
 // }
 
-uint8_t gimbal_task(CONTAL_Typedef          *CONTAL,
-                    RUI_ROOT_STATUS_Typedef  *Root,
-                    MOTOR_Typdef             *MOTOR,
-                    IMU_Data_t               *IMU)
+uint8_t gimbal_task(CONTAL_Typedef *CONTAL,RUI_ROOT_STATUS_Typedef *Root,MOTOR_Typdef  *MOTOR,IMU_Data_t *IMU)
 {
     static uint8_t PID_INIT  = RUI_DF_ERROR;
     static uint8_t AIM_INIT  = RUI_DF_ERROR;
@@ -217,53 +218,29 @@ uint8_t gimbal_task(CONTAL_Typedef          *CONTAL,
         return RUI_DF_ERROR;
     }
 
-    /* 遥控离线：云台锁定在当前位置
-     * ★ Yaw用YawTotalAngle，所以锁定也要用YawTotalAngle */
+   //离线检测
     if (Root->RM_DBUS == RUI_DF_OFFLINE)
     {
         CONTAL->HEAD.Yaw   = IMU->YawTotalAngle;
         CONTAL->HEAD.Pitch = IMU->pitch;
     }
 
-    /* Pitch 软限位 */
     CONTAL->HEAD.Pitch = Gimbal_Clamp(CONTAL->HEAD.Pitch,CONTAL->HEAD.Pitch_MAX,CONTAL->HEAD.Pitch_MIN);
-
-    /* 底盘跟随用的相对角度（给Chassis_Task用）
-     * 4310反馈的 DATA.ralativeAngle 是相对初始角度（度）
-     * ★ 这里用MIT模式反馈的pos换算，单位：编码器计数（兼容原框架）*/
-    CONTAL->CG.RELATIVE_ANGLE =
-        (int16_t)(MOTOR->m_dm4310_y_t.DATA.pos * (180.0f / 3.14159265f)
-                  * 8192.0f / 360.0f);
+   //数据给底盘跟随
+    CONTAL->CG.RELATIVE_ANGLE =(int16_t)(MOTOR->m_dm4310_y_t.DATA.pos * (180.0f / 3.14159265f)* 8192.0f / 360.0f);
     CONTAL->CG.YAW_SPEED = MOTOR->m_dm4310_y_t.DATA.vel;  // rad/s
 
-    PID_Calculate(&MOTOR->m_dm4310_y_t.PID_P,
-                  IMU->YawTotalAngle,
-                  CONTAL->HEAD.Yaw);
+    PID_Calculate(&MOTOR->m_dm4310_y_t.PID_P,IMU->YawTotalAngle,CONTAL->HEAD.Yaw);
 
-    PID_Calculate(&MOTOR->m_dm4310_y_t.PID_S,
-                  QEKF_INS.Gyro[2] * 50.0f,
-                  MOTOR->m_dm4310_y_t.PID_P.Output);
+    PID_Calculate(&MOTOR->m_dm4310_y_t.PID_S,QEKF_INS.Gyro[2] * 50.0f,MOTOR->m_dm4310_y_t.PID_P.Output);
 
-    PID_Calculate(&MOTOR->m_dm4310_p_t.PID_P,
-                  IMU->pitch,
-                  CONTAL->HEAD.Pitch);
+    PID_Calculate(&MOTOR->m_dm4310_p_t.PID_P,IMU->pitch,CONTAL->HEAD.Pitch);
 
-    PID_Calculate(&MOTOR->m_dm4310_p_t.PID_S,
-                  IMU->gyro[1] * 50.0f,
-                  MOTOR->m_dm4310_p_t.PID_P.Output);
+    PID_Calculate(&MOTOR->m_dm4310_p_t.PID_S,IMU->gyro[1] * 50.0f,MOTOR->m_dm4310_p_t.PID_P.Output);
 
-    mit_ctrl(&hcan1, YAW_CAN_ID,0.0f, 0.0f,0.0f, 0.3,0.0f);
-    mit_ctrl(&hcan1, PITCH_CAN_ID,0.0f,0.0f,0.0f,0.3f,0.0f);
+    mit_ctrl(&hcan1, YAW_CAN_ID,0.0f, 0.0f,0.0f, 0.0f,MOTOR->m_dm4310_y_t.PID_S.Output* 0.00061035);
+    mit_ctrl(&hcan1, PITCH_CAN_ID,0.0f,0.0f,0.0f,0.0f,MOTOR->m_dm4310_p_t.PID_S.Output* 0.00061035);
 
     return RUI_DF_READY;
 }
 
-void Gimbal_Set_Target_RC(CONTAL_Typedef *CONTAL,DBUS_Typedef *DBUS, IMU_Data_t *IMU)
-{
-    //Yaw：直接累加，不归一化，保持和 YawTotalAngle 同一坐标系 ,以下累加的符号可能反了
-    CONTAL->HEAD.Yaw -= (float)DBUS->Remote.CH3 * (YAW_RC_SPEED / 1024.0f);
-
-    CONTAL->HEAD.Pitch -= (float)DBUS->Remote.CH2 * (PITCH_RC_SPEED / 1024.0f);
-    CONTAL->HEAD.Pitch  = Gimbal_Clamp(CONTAL->HEAD.Pitch,CONTAL->HEAD.Pitch_MAX,CONTAL->HEAD.Pitch_MIN);
-
-}
