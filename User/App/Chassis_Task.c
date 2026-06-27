@@ -22,21 +22,19 @@ static float Clamp(float val, float limit)//限幅
 }
 
 //DBUS遥控写法
-static void ApplyGimbalTransform(CONTAL_Typedef *CONTAL,
-                                 DBUS_Typedef   *DBUS,
-                                 float           gimbal_deg)
+static void Apply_GimbalTransform(CONTAL_Typedef *CONTAL, float gimbal_deg)
 {
-    // 前馈：预测下一周期底盘转到哪
-    float angle_rad = (gimbal_deg + CONTAL->BOTTOM.VW * CHASSIS_LOOP_TIME* (180.0f / 3.14159265f))
-                      * (3.14159265f / 180.0f);
+    float angle_rad = gimbal_deg * (3.14159265f / 180.0f)
+                     + CONTAL->BOTTOM.VW * CHASSIS_LOOP_TIME;
 
-    float vx_rc = DBUS->Remote.CH1 * (VX_MAX / 660.0);  // 遥控 → m/s
-    float vy_rc = DBUS->Remote.CH0 * (VY_MAX / 660.0);
+    /* vx/vy 已经由云台板通过双板通信填入 CONTAL->BOTTOM */
+    float vx_rc = CONTAL->BOTTOM.VX_RC;  // 云台板发来的原始摇杆vx
+    float vy_rc = CONTAL->BOTTOM.VY_RC;  // 云台板发来的原始摇杆vy
 
-    //旋转矩阵：将遥控输入旋转到底盘系
-    CONTAL->BOTTOM.VX =  vx_rc * cosf(angle_rad) - vy_rc * sinf(angle_rad);
-    CONTAL->BOTTOM.VY =  vx_rc * sinf(angle_rad) + vy_rc * cosf(angle_rad);
+    CONTAL->BOTTOM.VX = vx_rc * cosf(angle_rad) - vy_rc * sinf(angle_rad);
+    CONTAL->BOTTOM.VY = vx_rc * sinf(angle_rad) + vy_rc * cosf(angle_rad);
 }
+
 /*
 //VT13遥控
 static void ApplyGimbal_Transform(CONTAL_Typedef *CONTAL,
@@ -126,7 +124,7 @@ uint8_t Motor_PID_Chassis_Init(MOTOR_Typdef *MOTOR)
     return RUI_DF_READY;
 
 }
-uint8_t Chassis_AIM_INIT(RUI_ROOT_STATUS_Typedef *Root, MOTOR_Typdef *MOTOR)
+uint8_t Chassis_AIM_INIT(RUI_ROOT_STATUS_Typedef *Root, MOTOR_Typdef *MOTOR)//这个函数我都没用
 {
     //检查离线
     if (Root->MOTOR_Chassis_1     == RUI_DF_OFFLINE ||
@@ -298,4 +296,53 @@ void Chassis_Auto_changeMode(CONTAL_Typedef *CONTAL, IMU_Data_t *IMU,DBUS_Typede
         Chassis_follow_Gimbal(CONTAL, DBUS, IMU);
     }
 
+}
+uint8_t ChassisRXResolve(uint8_t * data,DBUS_Typedef *DBUS,RUI_ROOT_STATUS_Typedef *Root)
+{
+	CanCommunit_t.gmTOch.getData[0] = data[0];
+	CanCommunit_t.gmTOch.getData[1] = data[1];
+	CanCommunit_t.gmTOch.getData[2] = data[2];
+	CanCommunit_t.gmTOch.getData[3] = data[3];
+	CanCommunit_t.gmTOch.getData[4] = data[4];
+	CanCommunit_t.gmTOch.getData[5] = data[5];
+	CanCommunit_t.gmTOch.getData[6] = data[6];
+	CanCommunit_t.gmTOch.getData[7] = data[7];
+	//赋值给遥控
+	DBUS->Remote.CH0  = CanCommunit_t.gmTOch.dataNeaten.vx;
+	DBUS->Remote .CH1 = CanCommunit_t.gmTOch.dataNeaten.vy;
+	DBUS->Remote.Dial = CanCommunit_t.gmTOch.dataNeaten.vr;
+
+
+	//   G开关摩擦轮 （自动开）      C开启超电     Shift小陀螺  √
+	//Q左转 	√			 E右转	√					右键长按视觉模式√    单连发/鼠标 √  电容电量（未加）
+
+
+	DBUS->KeyBoard .F  = CanCommunit_t.gmTOch.dataNeaten.key_f  ;
+	DBUS->KeyBoard .G  = CanCommunit_t.gmTOch.dataNeaten.key_g ;
+	DBUS->KeyBoard .C  = CanCommunit_t.gmTOch.dataNeaten.key_c ;
+	DBUS->KeyBoard .Shift   = CanCommunit_t.gmTOch.dataNeaten.key_shift ;
+	DBUS->KeyBoard .Q  = CanCommunit_t.gmTOch.dataNeaten.key_q ;
+	DBUS->KeyBoard .E  = CanCommunit_t.gmTOch.dataNeaten.key_e ;
+	DBUS->KeyBoard .Ctrl  = CanCommunit_t.gmTOch.dataNeaten.key_ctrl ;
+//	DBUS->KeyBoard .R  = CanCommunit_t.gmTOch.dataNeaten.key_r;
+//	DBUS->KeyBoard .Ctrl  = CanCommunit_t.gmTOch.dataNeaten.key_ctrl;
+	  RUI_ROOT_STATUS.RM_DBUS =CanCommunit_t .gmTOch .dataNeaten .romoteOnLine   ;
+
+	DBUS->Remote .S1=CanCommunit_t.gmTOch .dataNeaten .S1 ;
+	DBUS->Remote .S2=CanCommunit_t.gmTOch .dataNeaten .S2 ;
+
+	RUI_ROOT_STATUS.Power =CanCommunit_t.gmTOch .dataNeaten .supUSe ;
+
+	vision_state=CanCommunit_t.gmTOch.dataNeaten.vision;
+
+
+	return 1;
+}
+
+uint8_t ChassisTXResolve(User_Data_T *User_data)
+{
+    CanCommunit_t.chTOgm.dataNeaten_another.heat_last  = 230 - User_data->power_heat_data.shooter_17mm_barrel_heat ;	//剩余枪口热量
+    CanCommunit_t.chTOgm.dataNeaten_another.huanchongnengliang  = User_data->power_heat_data .buffer_energy ;	//缓冲能量
+    canx_send_data(&hcan1, CHASSIC_kong, CanCommunit_t.chTOgm .sendData );		//新协议
+    return 1;
 }
