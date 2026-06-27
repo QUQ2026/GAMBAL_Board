@@ -10,6 +10,70 @@
 #include "Power_Ctrl.h"
 #include "All_Init.h"
 #include "VT13.h"
+
+union gmTOch_typdef		//ʹ�ù�������������
+{
+    struct {
+        int16_t vx:11;		//ƽ���ٶ�
+        int16_t vy:11;		//ǰ���ٶ�
+        int16_t vr:11;		//��ת�ٶ�
+        uint16_t key_q:1;
+        uint16_t key_e:1;
+        uint16_t key_r:1;
+        uint16_t key_z:1;
+        uint16_t key_x:1;
+        uint16_t key_c:1;
+        uint16_t key_v:1;
+        uint16_t key_shift:1;
+        uint16_t key_ctrl:1;
+        uint16_t key_f:1;
+        uint16_t key_g:1;
+        uint16_t key_b:1;
+        uint16_t romoteOnLine	:2;			//ң���Ƿ�����
+
+        uint16_t S1:2;
+        uint16_t S2:2;
+
+        uint16_t supUSe :1;			//�Ƿ�ʹ�õ���
+        uint16_t pitch:1;		//������״̬
+        uint16_t fire_wheel:1;
+        uint16_t shoot:1;
+        uint16_t vision:1;
+
+        //		uint16_t DBUS_state:1;
+    }dataNeaten;
+    //CAN���͵�����
+    //	uint8_t sendData[8];
+    uint8_t getData[8];
+};
+union chTOgm_typdef		//ʹ�ù�������������
+{
+    struct {
+        int16_t pitch;
+        int16_t yaw;
+        float time;
+    }dataNeaten_angle;
+    struct{
+        uint64_t heat_last:16;	//ʣ������
+        uint64_t huanchongnengliang:8;	//��������
+        uint64_t nowSpeed:8;	//��ǰ����
+        uint64_t target:1;	//�Ƿ�ʶ��ɹ���־λ
+        uint64_t visionMod:3;		//�Ӿ���״̬
+        uint64_t visionState:1;		//�Ӿ����ߵ�״̬
+        uint64_t judgeState:1;		//����ϵͳ��״̬
+        uint64_t :0;		//����
+    }dataNeaten_another;
+    //CAN���͵�����
+    uint8_t sendData[4];
+    //	uint8_t getData[8];
+};
+struct CanCommunit_typedef
+{
+    union chTOgm_typdef chTOgm;
+    union gmTOch_typdef gmTOch;
+};
+
+
 static float NormalizeAngle(float angle);
 static float Clamp(float val, float limit);
 
@@ -32,4 +96,6 @@ void Chassis_Gyroscope(CONTAL_Typedef *CONTAL, VT13_Typedef *VT13, IMU_Data_t *I
 void Chassis_Follow_Gimbal(CONTAL_Typedef *CONTAL, VT13_Typedef *VT13, IMU_Data_t *IMU);
 void Chassis_auto_changeMode(CONTAL_Typedef *CONTAL, IMU_Data_t *IMU,VT13_Typedef *VT13);
 void Chassis_Auto_changeMode(CONTAL_Typedef *CONTAL, IMU_Data_t *IMU,DBUS_Typedef *DBUS);
+uint8_t ChassisTXResolve(User_Data_T *User_data);
+uint8_t ChassisRXResolve(uint8_t * data,DBUS_Typedef *DBUS,RUI_ROOT_STATUS_Typedef *Root);
 #endif

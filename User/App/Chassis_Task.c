@@ -24,12 +24,11 @@ static float Clamp(float val, float limit)//限幅
 //DBUS遥控写法
 static void Apply_GimbalTransform(CONTAL_Typedef *CONTAL, float gimbal_deg)
 {
-    float angle_rad = gimbal_deg * (3.14159265f / 180.0f)
-                     + CONTAL->BOTTOM.VW * CHASSIS_LOOP_TIME;
+    float angle_rad = gimbal_deg * (3.14159265f / 180.0f)+ CONTAL->BOTTOM.VW * CHASSIS_LOOP_TIME;
 
     /* vx/vy 已经由云台板通过双板通信填入 CONTAL->BOTTOM */
-    float vx_rc = CONTAL->BOTTOM.VX_RC;  // 云台板发来的原始摇杆vx
-    float vy_rc = CONTAL->BOTTOM.VY_RC;  // 云台板发来的原始摇杆vy
+    float vx_rc = DBUS.Remote.CH1 * (VX_MAX / 660.0);  // 云台板发来的原始摇杆vx
+    float vy_rc = DBUS.Remote.CH0 * (VY_MAX / 660.0);  // 云台板发来的原始摇杆vy
 
     CONTAL->BOTTOM.VX = vx_rc * cosf(angle_rad) - vy_rc * sinf(angle_rad);
     CONTAL->BOTTOM.VY = vx_rc * sinf(angle_rad) + vy_rc * cosf(angle_rad);

@@ -44,7 +44,7 @@ uint8_t flag2;
 
 
 float vision_state;
-
+struct CanCommunit_typedef CanCommunit_t;
 DBUS_UNION_TypeDef RUI_V_DBUS_UNION = { 0 };
 VT13_UNION_Typdef VT13_UNION = {0};
 		
