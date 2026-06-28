@@ -4,7 +4,7 @@
 #define OMNI_RATIO            ((30.0f / 3.14159265f) / 0.075f * 19.0f)
 
 static float s_last_angle_err = 0.0f;     // 上次跟随角度误差（用于微分）
-
+YawFrame_t YawFrame;
 
 static float NormalizeAngle(float angle)//角度归一化
 {
@@ -240,8 +240,6 @@ void Chassis_Gyroscope_DBUS(CONTAL_Typedef *CONTAL, DBUS_Typedef *DBUS, IMU_Data
     MecanumResolve(CONTAL);
 }
 
-
-
 /*
 void Chassis_Follow_Gimbal(CONTAL_Typedef *CONTAL, VT13_Typedef *VT13, IMU_Data_t *IMU)
 {
@@ -274,7 +272,7 @@ void Chassis_follow_Gimbal(CONTAL_Typedef *CONTAL, DBUS_Typedef *DBUS, IMU_Data_
 
 
 //VT13
-void Chassis_auto_changeMode(CONTAL_Typedef *CONTAL, IMU_Data_t *IMU,VT13_Typedef *VT13) {
+void Chassis_Auto_changeMode_VT13(CONTAL_Typedef *CONTAL, IMU_Data_t *IMU,VT13_Typedef *VT13) {
     if (VT13->Remote.wheel > 50 || VT13->Remote.wheel < -50)//当拨轮在这个范围动时，不开启小陀螺，可能是误碰
     {
         Chassis_gyroscope_VT13(CONTAL, VT13, IMU);
@@ -285,8 +283,7 @@ void Chassis_auto_changeMode(CONTAL_Typedef *CONTAL, IMU_Data_t *IMU,VT13_Typede
 
 }
 //DBUS
-
-void Chassis_Auto_changeMode(CONTAL_Typedef *CONTAL, IMU_Data_t *IMU,DBUS_Typedef *DBUS) {
+void Chassis_Auto_changeMode_DBUS(CONTAL_Typedef *CONTAL, IMU_Data_t *IMU,DBUS_Typedef *DBUS) {
     if (DBUS->Remote.Dial > 50 || DBUS->Remote.Dial< -50)//当拨轮在这个范围动时，不开启小陀螺，可能是误碰
     {
         Chassis_Gyroscope_DBUS(CONTAL, DBUS, IMU);
@@ -296,52 +293,45 @@ void Chassis_Auto_changeMode(CONTAL_Typedef *CONTAL, IMU_Data_t *IMU,DBUS_Typede
     }
 
 }
-uint8_t ChassisRXResolve(uint8_t * data,DBUS_Typedef *DBUS,RUI_ROOT_STATUS_Typedef *Root)
+uint8_t ChassisRXResolve(uint8_t                 *data,
+                          DBUS_Typedef            *DBUS,
+                          RUI_ROOT_STATUS_Typedef *Root)
 {
-	CanCommunit_t.gmTOch.getData[0] = data[0];
-	CanCommunit_t.gmTOch.getData[1] = data[1];
-	CanCommunit_t.gmTOch.getData[2] = data[2];
-	CanCommunit_t.gmTOch.getData[3] = data[3];
-	CanCommunit_t.gmTOch.getData[4] = data[4];
-	CanCommunit_t.gmTOch.getData[5] = data[5];
-	CanCommunit_t.gmTOch.getData[6] = data[6];
-	CanCommunit_t.gmTOch.getData[7] = data[7];
-	//赋值给遥控
-	DBUS->Remote.CH0  = CanCommunit_t.gmTOch.dataNeaten.vx;
-	DBUS->Remote .CH1 = CanCommunit_t.gmTOch.dataNeaten.vy;
-	DBUS->Remote.Dial = CanCommunit_t.gmTOch.dataNeaten.vr;
+    for (int i = 0; i < 8; i++)
+        CanCommunit_t.gmTOch.getData[i] = data[i];
 
+    /* 解析到 DBUS，底盘板直接用 DBUS 字段做运动控制 */
+    DBUS->Remote.CH1  = CanCommunit_t.gmTOch.dataNeaten.vx;  // 前后
+    DBUS->Remote.CH0 = CanCommunit_t.gmTOch.dataNeaten.vy;  // 左右
+    DBUS->Remote.Dial= CanCommunit_t.gmTOch.dataNeaten.vr;  // 拨轮
 
-	//   G开关摩擦轮 （自动开）      C开启超电     Shift小陀螺  √
-	//Q左转 	√			 E右转	√					右键长按视觉模式√    单连发/鼠标 √  电容电量（未加）
+    DBUS->Remote.S1 = CanCommunit_t.gmTOch.dataNeaten.S1;
+    DBUS->Remote.S2= CanCommunit_t.gmTOch.dataNeaten.S2;
 
+    Root->RM_DBUS = CanCommunit_t.gmTOch.dataNeaten.romoteOnLine;
+    Root->Power   = CanCommunit_t.gmTOch.dataNeaten.supUSe;
 
-	DBUS->KeyBoard .F  = CanCommunit_t.gmTOch.dataNeaten.key_f  ;
-	DBUS->KeyBoard .G  = CanCommunit_t.gmTOch.dataNeaten.key_g ;
-	DBUS->KeyBoard .C  = CanCommunit_t.gmTOch.dataNeaten.key_c ;
-	DBUS->KeyBoard .Shift   = CanCommunit_t.gmTOch.dataNeaten.key_shift ;
-	DBUS->KeyBoard .Q  = CanCommunit_t.gmTOch.dataNeaten.key_q ;
-	DBUS->KeyBoard .E  = CanCommunit_t.gmTOch.dataNeaten.key_e ;
-	DBUS->KeyBoard .Ctrl  = CanCommunit_t.gmTOch.dataNeaten.key_ctrl ;
-//	DBUS->KeyBoard .R  = CanCommunit_t.gmTOch.dataNeaten.key_r;
-//	DBUS->KeyBoard .Ctrl  = CanCommunit_t.gmTOch.dataNeaten.key_ctrl;
-	  RUI_ROOT_STATUS.RM_DBUS =CanCommunit_t .gmTOch .dataNeaten .romoteOnLine   ;
+    DBUS->KeyBoard.Q     = CanCommunit_t.gmTOch.dataNeaten.key_q;
+    DBUS->KeyBoard.E     = CanCommunit_t.gmTOch.dataNeaten.key_e;
+    DBUS->KeyBoard.C     = CanCommunit_t.gmTOch.dataNeaten.key_c;
+    DBUS->KeyBoard.Shift = CanCommunit_t.gmTOch.dataNeaten.key_shift;
+    DBUS->KeyBoard.Ctrl  = CanCommunit_t.gmTOch.dataNeaten.key_ctrl;
+    DBUS->KeyBoard.F     = CanCommunit_t.gmTOch.dataNeaten.key_f;
+    DBUS->KeyBoard.G     = CanCommunit_t.gmTOch.dataNeaten.key_g;
 
-	DBUS->Remote .S1=CanCommunit_t.gmTOch .dataNeaten .S1 ;
-	DBUS->Remote .S2=CanCommunit_t.gmTOch .dataNeaten .S2 ;
-
-	RUI_ROOT_STATUS.Power =CanCommunit_t.gmTOch .dataNeaten .supUSe ;
-
-	vision_state=CanCommunit_t.gmTOch.dataNeaten.vision;
-
-
-	return 1;
+    return 1;
 }
 
-uint8_t ChassisTXResolve(User_Data_T *User_data)
+
+uint8_t ChassisRXResolve_Yaw(uint8_t *data, CONTAL_Typedef *CONTAL)
 {
-    CanCommunit_t.chTOgm.dataNeaten_another.heat_last  = 230 - User_data->power_heat_data.shooter_17mm_barrel_heat ;	//剩余枪口热量
-    CanCommunit_t.chTOgm.dataNeaten_another.huanchongnengliang  = User_data->power_heat_data .buffer_energy ;	//缓冲能量
-    canx_send_data(&hcan1, CHASSIC_kong, CanCommunit_t.chTOgm .sendData );		//新协议
+    /* 4字节还原成 float */
+    YawFrame.data[0] = data[0];
+    YawFrame.data[1] = data[1];
+    YawFrame.data[2] = data[2];
+    YawFrame.data[3] = data[3];
+
+    CONTAL->CG.RELATIVE_ANGLE= YawFrame.yaw_abs;
+
     return 1;
 }

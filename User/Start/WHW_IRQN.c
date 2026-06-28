@@ -60,7 +60,7 @@ void StartMoveTask(void const * argument)
 					//  &model,
 					//  &CAPDATE.GET,
 					//  &ALL_MOTOR);
-
+    	GimbalTXResolve_DBUS(&RUI_V_CONTAL, &DBUS, &RUI_ROOT_STATUS, &IMU_Data);
     	currentTimeMove += 1;
     	osDelayUntil(currentTimeMove);
     //	vTaskDelay (1);

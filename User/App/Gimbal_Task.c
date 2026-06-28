@@ -200,3 +200,42 @@ uint8_t gimbal_task(CONTAL_Typedef *CONTAL,RUI_ROOT_STATUS_Typedef *Root,MOTOR_T
     return RUI_DF_READY;
 }
 
+uint8_t GimbalTXResolve_DBUS(CONTAL_Typedef          *CONTAL,
+                              DBUS_Typedef            *DBUS,
+                              RUI_ROOT_STATUS_Typedef *Root,
+                              IMU_Data_t              *IMU)
+{
+    /* ---- 帧1：遥控控制量 ---- */
+    CanCommunit_t.gmTOch.dataNeaten.vx = DBUS->Remote.CH1;
+    CanCommunit_t.gmTOch.dataNeaten.vy = DBUS->Remote.CH0;
+    CanCommunit_t.gmTOch.dataNeaten.vr = DBUS->Remote.Dial;
+
+    CanCommunit_t.gmTOch.dataNeaten.S1 = DBUS->Remote.S1;
+    CanCommunit_t.gmTOch.dataNeaten.S2 = DBUS->Remote.S2;
+
+    CanCommunit_t.gmTOch.dataNeaten.romoteOnLine = Root->RM_DBUS;
+    CanCommunit_t.gmTOch.dataNeaten.supUSe       = CONTAL->BOTTOM.CAP;
+
+    CanCommunit_t.gmTOch.dataNeaten.pitch      = CONTAL->HEAD.Pitch > 5.0f ? 1 : 0;
+    CanCommunit_t.gmTOch.dataNeaten.fire_wheel = CONTAL->SHOOT.Shoot_Speed;
+   // CanCommunit_t.gmTOch.dataNeaten.shoot      = CONTAL->SHOOT.Shoot_State;
+    CanCommunit_t.gmTOch.dataNeaten.vision     = 0;
+
+    CanCommunit_t.gmTOch.dataNeaten.key_q     = DBUS->KeyBoard.Q;
+    CanCommunit_t.gmTOch.dataNeaten.key_e     = DBUS->KeyBoard.E;
+    CanCommunit_t.gmTOch.dataNeaten.key_c     = DBUS->KeyBoard.C;
+    CanCommunit_t.gmTOch.dataNeaten.key_shift = DBUS->KeyBoard.Shift;
+    CanCommunit_t.gmTOch.dataNeaten.key_ctrl  = DBUS->KeyBoard.Ctrl;
+    CanCommunit_t.gmTOch.dataNeaten.key_f     = DBUS->KeyBoard.F;
+    CanCommunit_t.gmTOch.dataNeaten.key_g     = DBUS->KeyBoard.G;
+
+    canx_send_data(&hcan1, GIMBAL_kong, CanCommunit_t.gmTOch.getData);
+
+    /* ---- 帧2：yaw绝对角度（float拆4字节）----
+     * 用 YawTotalAngle（累计角度）而不是 yaw（±180°）
+     * 底盘板坐标变换用这个值 */
+    YawFrame.yaw_abs = IMU->YawTotalAngle;
+    canx_send_data(&hcan1, GIMBAL_kong+1, YawFrame.data);
+
+    return 1;
+}
