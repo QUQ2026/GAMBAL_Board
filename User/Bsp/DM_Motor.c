@@ -173,7 +173,8 @@ void DM_Motor_Send(hcan_t* hcan, uint16_t id, float m1_cur, float m2_cur, float 
 		data[i*2]   = (uint8_t)(cur_val[i] >> 8);
 		data[i*2+1] = (uint8_t)(cur_val[i] & 0xFF);
 	}
-	canx_send_data(hcan, id, data_aaa);
+	//canx_send_data(hcan, id, data_aaa);
+	canx_send_data(hcan, id, data);
 }
 //************************************************************************
 //* @brief:      	dm4310_fbdata: 获取DM4310电机反馈数据函数
