@@ -22,7 +22,7 @@ static float Clamp(float val, float limit)//限幅
 }
 
 //DBUS遥控写法
-static void Apply_GimbalTransform(CONTAL_Typedef *CONTAL, float gimbal_deg)
+static void Apply_GimbalTransform(CONTAL_Typedef *CONTAL, DBUS_Typedef DBUS,float gimbal_deg)
 {
     float angle_rad = gimbal_deg * (3.14159265f / 180.0f)+ CONTAL->BOTTOM.VW * CHASSIS_LOOP_TIME;
 
@@ -183,11 +183,7 @@ uint8_t chassis_task(CONTAL_Typedef *CONTAL,
                  (float)MOTOR->DJI_3508_Chassis_4.DATA.Speed_now,
                  MOTOR->DJI_3508_Chassis_4.DATA.Aim);
    //功率控制
-    chassis_power_control(CONTAL,
-                             User_data,
-                             model,
-                             CAP_GET,
-                             MOTOR);
+    chassis_power_control(CONTAL,User_data,model,CAP_GET,MOTOR);
 
     float Out_put[4];
     Out_put[0] = MOTOR->DJI_3508_Chassis_1.PID_S.Output;//可在前面加一个前馈
@@ -234,9 +230,11 @@ void Chassis_gyroscope_VT13(CONTAL_Typedef *CONTAL, VT13_Typedef *VT13, IMU_Data
 
 
 void Chassis_Gyroscope_DBUS(CONTAL_Typedef *CONTAL, DBUS_Typedef *DBUS, IMU_Data_t *IMU) {
+   // if (ChassisRXResolve(data,*DBUS,Root))
     CONTAL->BOTTOM.VW =(float)DBUS->Remote.Dial *(VW_MAX/660.0f);// 使用陀螺仪 yaw（不修改原始值，局部变量归一化）
     float gimbal_deg =NormalizeAngle(IMU->yaw);
-    ApplyGimbalTransform(CONTAL, DBUS, gimbal_deg);
+   // ApplyGimbalTransform(CONTAL, DBUS, gimbal_deg);
+    Apply_GimbalTransform(CONTAL, DBUS, gimbal_deg);
     MecanumResolve(CONTAL);
 }
 
@@ -265,7 +263,7 @@ void Chassis_follow_Gimbal(CONTAL_Typedef *CONTAL, DBUS_Typedef *DBUS, IMU_Data_
     CONTAL->BOTTOM.VW = Clamp(vw, VW_MAX);
     // 坐标转换：IMU->yaw = 云台绝对角度
     float gimbal_deg = NormalizeAngle(IMU->yaw);
-    ApplyGimbalTransform(CONTAL, DBUS, gimbal_deg);
+    ApplyGimbalTransform(CONTAL, DBUS, gimbal_deg);//?
     MecanumResolve(CONTAL);
 }
 
