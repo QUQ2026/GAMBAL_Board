@@ -86,7 +86,7 @@ void StartIMUTask(void const * argument)
     portTickType currentTimeIMU;
     currentTimeIMU = xTaskGetTickCount();
 
-   // static uint32_t dt_pc = 0;
+   static uint32_t dt_pc = 0;
     static uint32_t INS_DWT_Count = 0;
 
     //陀螺仪初始化
