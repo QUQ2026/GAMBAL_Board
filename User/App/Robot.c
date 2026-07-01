@@ -29,25 +29,25 @@ void RobotTask(uint8_t mode,
 
         case 1://底盘
         {
-            // if (Root->RM_DBUS == RUI_DF_OFFLINE)
-            // {
-            //     CONTAL->BOTTOM.VX    = 0.0f;
-            //     CONTAL->BOTTOM.VY    = 0.0f;
-            //     CONTAL->BOTTOM.VW    = 0.0f;
-            //     CONTAL->BOTTOM.wheel1 = 0.0f;
-            //     CONTAL->BOTTOM.wheel2 = 0.0f;
-            //     CONTAL->BOTTOM.wheel3 = 0.0f;
-            //     CONTAL->BOTTOM.wheel4 = 0.0f;
-            //     break;
-            // }
+             if (Root->RM_DBUS == RUI_DF_OFFLINE)
+             {
+                 CONTAL->BOTTOM.VX    = 0.0f;
+                 CONTAL->BOTTOM.VY    = 0.0f;
+                 CONTAL->BOTTOM.VW    = 0.0f;
+                 CONTAL->BOTTOM.wheel1 = 0.0f;
+                 CONTAL->BOTTOM.wheel2 = 0.0f;
+                 CONTAL->BOTTOM.wheel3 = 0.0f;
+                 CONTAL->BOTTOM.wheel4 = 0.0f;
+                 break;
+             }
             //Chassis_auto_changeMode(CONTAL,IMU_Data,VT13_DBUS);
             Chassis_Auto_changeMode_DBUS(CONTAL,IMU_Data,DBUS);
         }break;
 
         case 2: {//云台
-           // if (Root->RM_DBUS != RUI_DF_OFFLINE) {RM_DBUS好像对VT13专属的保护，要么
+            if (Root->RM_DBUS != RUI_DF_OFFLINE)
                 //Gimbal_set_target_VT13(CONTAL,VT13_DBUS,IMU_Data);
-            Gimbal_Set_Target_RC(CONTAL,DBUS, IMU_Data);
+            Gimbal_Set_Target_DBUS(CONTAL,DBUS, IMU_Data);
           //  }
             gimbal_task(CONTAL,Root,MOTOR,IMU_Data);
         }break;

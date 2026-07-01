@@ -48,18 +48,10 @@ void StartMoveTask(void const * argument)
 				 //  &TDDDD,
 				 //  &VT13);
 
-    	gimbal_task(&RUI_V_CONTAL,
-					&RUI_ROOT_STATUS,
-					&ALL_MOTOR,
-					&IMU_Data);
+    	gimbal_task(&RUI_V_CONTAL,&RUI_ROOT_STATUS,&ALL_MOTOR,&IMU_Data);
 
     	// // 底盘速度PID + 功率控制 + CAN发送
-    	// chassis_task(&RUI_V_CONTAL,
-					//  &RUI_ROOT_STATUS,
-					//  &User_data,
-					//  &model,
-					//  &CAPDATE.GET,
-					//  &ALL_MOTOR);
+    	// chassis_task(&RUI_V_CONTAL,&RUI_ROOT_STATUS,&User_data,&model,&CAPDATE.GET,&ALL_MOTOR);
     	GimbalTXResolve_DBUS(&RUI_V_CONTAL, &DBUS, &RUI_ROOT_STATUS, &IMU_Data);
     	currentTimeMove += 1;
     	osDelayUntil(currentTimeMove);

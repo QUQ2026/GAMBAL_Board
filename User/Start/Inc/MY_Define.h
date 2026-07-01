@@ -144,6 +144,7 @@
 //双板通讯
 #define CHASSIC_kong 0x232
 #define GIMBAL_kong 0x231
+#define GIMBAL_kong_YAW 0x233
 
 //达妙电机不同模式ID
 #define MIT_MODE 			0x000
